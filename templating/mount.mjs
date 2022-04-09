@@ -1,16 +1,22 @@
-import { apply_expression_part } from "./apply-expression.mjs";
-import PartList from './part-list.mjs';
+import { apply_expression } from "./apply-expression.mjs";
 
-export function make_mount(apply_expr = apply_expression_part) {
-	return function mount(expression, root = document.body) {
-		const controller = new AbortController();
+const main = document.querySelector('main');
 
-		const pl = new PartList(root);
+export function mount(expression, className = "") {
+	// Remove old contents:
+	while (main.firstChild) {
+		main.firstChild.remove();
+	}
+	const temp = new Comment();
+	main.appendChild(temp);
+	main.className = className;
+	apply_expression(expression, temp);
+};
 
-		apply_expr(expression, pl, 0, controller.signal);
-
-		return () => controller.abort();
-	};
+export function save() {
+	const ret = new DocumentFragment();
+	while (main.firstChild) {
+		ret.appendChild(main.firstChild);
+	}
+	return ret;
 }
-
-export default make_mount();

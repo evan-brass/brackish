@@ -1,10 +1,9 @@
-import { get_path, compile_paths } from './descendant-path.mjs';
+import { coalesce_paths, get_path } from './descendant-path.mjs';
 
-// We can remove the asyncronous sha-1 hash with a 17-character random string that's only generated once.
 // It's important for the marker to start with a character (an 'a' in this case) so that it is a valid attribute name.
 const marker_base = crypto.getRandomValues(new Uint8Array(8)).reduce((str, n) => str + n.toString(16).padStart(2, '0'), 'a');
-const marker_finder = new RegExp(`${marker_base}-([0-9]+)`);
 
+const marker_finder = new RegExp(`${marker_base}-([0-9]+)`);
 function find_marker(string) {
 	const exec = marker_finder.exec(string);
 	if (exec) {
@@ -17,62 +16,67 @@ function find_marker(string) {
 	}
 }
 
-export default function create_template(strings) {
-	const paths = [];
-	// Create a template element with the markers:
-	let order = 0;
-	let template_contents = strings[0];
-	for (let i = 1; i < strings.length; ++i) {
-		template_contents += `${marker_base}-${order++}`;
-		template_contents += strings[i];
+function* traverse_tree(root) {
+	yield root;
+	if (root.getAttributeNames) {
+		for (const name of root.getAttributeNames()) {
+			yield root.getAttributeNode(name);
+		}
 	}
+	for (let i = 0; i < root.childNodes.length; ++i) {
+		yield* traverse_tree(root.childNodes[i]);
+	}
+}
+function concat_strings(strings) {
+	let ret = strings[0];
+	for (let i = 1; i < strings.length; ++i) {
+		ret += `${marker_base}-${i - 1}`;
+		ret += strings[i];
+	}
+	return ret;
+}
+
+export default function create_template(strings) {
 	const template = document.createElement('template');
-	template.innerHTML = template_contents;
+	template.innerHTML = concat_strings(strings);
 
 	// Convert the markers within that template element:
-	let root = template.content;
+	let paths = [];
+	const root = template.content;
 	root.normalize();
-	const walker = document.createTreeWalker(
-		root,
-		NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT
-	);
-	for (let next_node = walker.nextNode(); next_node; next_node = walker.nextNode()) {
-		const node = walker.currentNode;
-		if (node.nodeType == Node.ELEMENT_NODE) {
-			for (const attribute_name of node.getAttributeNames()) {
-				const [_before, i, _after] = find_marker(attribute_name);
-				if (i != -1) {
-					paths[i] = get_path(node, template.content);
-					node.removeAttribute(attribute_name);
-				}
+	for (const node of traverse_tree(root)) {
+		if (node instanceof Attr) {
+			const [before, i, after] = find_marker(node.localName);
+			if (i != -1) {
+				if (before !== '' || after !== '') throw new Error("Found an attribute that somewhat conflicted with the marker!");
+				paths[i] = get_path(node.ownerElement, root);
+				node.ownerElement.removeAttributeNode(node);
 			}
-		} else if (node.nodeType == Node.TEXT_NODE) {
+			const [b2, i2, a2] = find_marker(node.value);
+			if (i2 != -1) {
+				if (b2 !== '' || a2 !== '') throw new Error("Attribute value parts are only permitted if they are the entirety of the attribute's value.");
+				if (i != -1) throw new Error("You can't have an attribute value part as a value of an attribute part.");
+				paths[i2] = get_path(node.ownerElement, root, node.name);
+				node.value = '';
+			}
+		} else if (node instanceof Text) {
 			const [before, i, after] = find_marker(node.data);
 			if (i != -1) {
 				if (node.parentNode.nodeName == 'STYLE') {
 					throw new Error("Node parts aren't allowed within style tags because during parsing comment nodes are not permitted content of style tags.  This would mean that the template could not be precompiled.");
 				}
+				// TODO: Add more permitted content checks: table, etc.
 				const placeholder = new Comment();
-				if (after != '') {
-					node.after(after);
-				}
-				next_node = walker.nextNode();
-				if (before != '') {
-					node.replaceWith(before, placeholder);
-				} else {
-					node.replaceWith(placeholder);
-				}
+				node.replaceWith(...([before, placeholder, after].filter(v => v !== '')));
 
 				// Get the content:
-				paths[i] = get_path(placeholder, template.content);
-
-				continue;
+				paths[i] = get_path(placeholder, root);
 			}
+
 		}
 	}
 
-	return {
-		template,
-		part_getter: compile_paths(paths)
-	};
+	paths = coalesce_paths(paths);
+
+	return { template, paths };
 }
