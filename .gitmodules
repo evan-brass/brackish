@@ -1,4 +1,4 @@
 [submodule "src"]
 	path = src
 	url = https://github.com/evan-brass/brackish.git
-	branch = dist
+	branch = src
