@@ -1,4 +1,4 @@
-import { coalesce_paths, get_path } from './descendant-path.mjs';
+import { merge_paths, get_path } from './descendant-path.mjs';
 
 // It's important for the marker to start with a character (an 'a' in this case) so that it is a valid attribute name.
 const marker_base = crypto.getRandomValues(new Uint8Array(8)).reduce((str, n) => str + n.toString(16).padStart(2, '0'), 'a');
@@ -18,7 +18,7 @@ function find_marker(string) {
 
 function* traverse_tree(root) {
 	yield root;
-	if (root.getAttributeNames) {
+	if ('getAttributeNames' in root) {
 		for (const name of root.getAttributeNames()) {
 			yield root.getAttributeNode(name);
 		}
@@ -72,11 +72,17 @@ export default function create_template(strings) {
 				// Get the content:
 				paths[i] = get_path(placeholder, root);
 			}
-
 		}
 	}
 
-	paths = coalesce_paths(paths);
+	let ret_paths;
+	for (const path of paths) {
+		if (!ret_paths) {
+			ret_paths = path;
+		} else {
+			merge_paths(ret_paths, path);
+		}
+	}
 
-	return { template, paths };
+	return { template, paths: ret_paths };
 }
