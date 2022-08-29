@@ -1,22 +1,7 @@
 import { apply_expression } from "./apply-expression.mjs";
 
-const main = document.querySelector('main');
-
-export function mount(expression, className = "") {
-	// Remove old contents:
-	while (main.firstChild) {
-		main.firstChild.remove();
-	}
+export function mount(expression, node = document.querySelector('main') ?? document.body) {
 	const temp = new Comment();
-	main.appendChild(temp);
-	main.className = className;
-	apply_expression(expression, temp);
+	node.appendChild(temp);
+	apply_expression(temp, expression);
 };
-
-export function save() {
-	const ret = new DocumentFragment();
-	while (main.firstChild) {
-		ret.appendChild(main.firstChild);
-	}
-	return ret;
-}
