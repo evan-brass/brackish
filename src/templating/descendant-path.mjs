@@ -34,18 +34,19 @@ export function merge_paths(into, from) {
 }
 
 // Descend the paths and yield the nodes it selects
-export function* descend_paths(paths, node) {
-	if (paths === undefined) return;
+export function descend_paths(paths, node, ret = []) {
+	if (paths == undefined) return ret;
 	for (const step in paths) {
 		if (typeof step == 'string') {
-			yield node.getAttributeNode(step);
+			ret.push(node.getAttributeNode(step));
 		} else if (Array.isArray(step)) {
-			yield* descend_paths(step, node);
+			descend_paths(step, node, ret);
 		} else if (typeof step == 'number') {
-			node = node.childNodes[step]
+			node = node.childNodes[step];
 		} else {
-			throw new Error("Invalid step inside the descendant paths.");
+			throw new Error("Malformed paths");
 		}
 	}
-	if (typeof paths[paths.length - 1] !== 'string') yield node;
+	if (typeof paths[paths.length - 1] !== 'string') ret.push(node);
+	return ret;
 }
