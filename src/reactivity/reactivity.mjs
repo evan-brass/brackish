@@ -2,6 +2,7 @@ let context;
 
 export function x(func) {
 	const prev_context = context;
+	context = func;
 	func();
 	context = prev_context;
 }

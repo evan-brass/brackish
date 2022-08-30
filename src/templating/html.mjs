@@ -20,7 +20,7 @@ export function html(strings, ...expressions) {
 
 	// Apply the expressions to the parts:
 	for (let i = 0; i < expressions.length; ++i) {
-		apply_expression(expressions[i], parts[i]);
+		apply_expression(parts[i], expressions[i]);
 	}
 	return fragment;
 }
