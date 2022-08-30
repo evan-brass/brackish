@@ -36,7 +36,7 @@ export function merge_paths(into, from) {
 // Descend the paths and yield the nodes it selects
 export function descend_paths(paths, node, ret = []) {
 	if (paths == undefined) return ret;
-	for (const step in paths) {
+	for (const step of paths) {
 		if (typeof step == 'string') {
 			ret.push(node.getAttributeNode(step));
 		} else if (Array.isArray(step)) {
