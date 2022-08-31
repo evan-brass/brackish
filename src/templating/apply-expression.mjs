@@ -5,9 +5,14 @@ export const ApplyExpression = new Trait("Override default expression applicatio
 export function apply_expression(node, expression) {
 	const expr_type = typeof expression;
 
+	// Handle ApplyExpression
 	if (expression instanceof ApplyExpression) {
-		return expression[ApplyExpression](node) ?? node;
-	} else if (expr_type == 'function') {
+		return expression[ApplyExpression].apply_expression(node) ?? node;
+	} else if (node instanceof ApplyExpression) {
+		node = node[ApplyExpression].into_raw();
+	}
+
+	if (expr_type == 'function') {
 		return expression(node) ?? node;
 	} else if (expr_type == 'undefined' || expression === null) {
 		// Do Nothing

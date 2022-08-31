@@ -1,26 +1,51 @@
 import create_template from './create-template.mjs';
 import get_or_set from '../lib/get-or-set.mjs';
-import { apply_expression } from './apply-expression.mjs';
+import { apply_expression, ApplyExpression } from './apply-expression.mjs';
 import { descend_paths } from './descendant-path.mjs';
 
 // Cache: strings -> (HTMLTemplateElement, Paths)
 const template_cache = new WeakMap();
 
-export function html(strings, ...expressions) {
-	// Get the template element:
-	const { template, paths } = get_or_set(template_cache, strings, () => create_template(strings));
-
-	// Instantiate our template:
-	const fragment = document.importNode(template.content, true);
-
-	// Retreive the parts using the paths:
-	const parts = descend_paths(paths, fragment);
-
-	if (expressions.length !== parts.length) throw new Error("Template didn't expects a different number of expressions: Usually an HTML syntax error. Check the permitted content rules.");
-
-	// Apply the expressions to the parts:
-	for (let i = 0; i < expressions.length; ++i) {
-		apply_expression(parts[i], expressions[i]);
+class Html {
+	constructor(strings, expressions) {
+		this.strings = strings;
+		this.expressions = expressions;
 	}
-	return fragment;
+	get [ApplyExpression]() {
+		return this;
+	}
+	apply_expression(node) {
+		if (node instanceof Html && node.strings === this.strings) {
+			if (this.expressions.length !== node.nodes.length) throw new Error("Template wasn't instantiated with the same number of expressions.");
+			this.nodes = node.nodes;
+			for (let i = 0; i < this.nodes.length; ++i) {
+				this.nodes[i] = apply_expression(this.nodes[i], this.expressions[i]);
+			}
+		} else {
+			// Get the template element:
+			const { template, paths } = get_or_set(template_cache, this.strings, () => create_template(this.strings));
+
+			// Instantiate our template:
+			const fragment = document.importNode(template.content, true);
+
+			// Retreive the parts using the paths:
+			this.nodes = descend_paths(paths, fragment);
+
+			if (this.expressions.length !== this.nodes.length) throw new Error("Template expects a different number of expressions: Usually an HTML syntax error. Check the permitted content rules.");
+
+			// Apply the expressions to the parts:
+			for (let i = 0; i < this.expressions.length; ++i) {
+				this.nodes[i] = apply_expression(this.nodes[i], this.expressions[i]);
+			}
+			this.raw = apply_expression(node, fragment);
+		}
+		return this;
+	}
+	into_raw() {
+		return this.raw;
+	}
+}
+
+export function html(strings, ...expressions) {
+	return new Html(strings, expressions);
 }
