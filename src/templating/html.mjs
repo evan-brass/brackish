@@ -2,6 +2,7 @@ import create_template from './create-template.mjs';
 import get_or_set from '../lib/get-or-set.mjs';
 import { apply_expression, ApplyExpression } from './apply-expression.mjs';
 import { descend_paths } from './descendant-path.mjs';
+import { x } from '../reactivity/reactivity.mjs';
 
 // Cache: strings -> (HTMLTemplateElement, Paths)
 const template_cache = new WeakMap();
@@ -35,7 +36,9 @@ class Html {
 
 			// Apply the expressions to the parts:
 			for (let i = 0; i < this.expressions.length; ++i) {
-				this.nodes[i] = apply_expression(this.nodes[i], this.expressions[i]);
+				x(() => {
+					this.nodes[i] = apply_expression(this.nodes[i], this.expressions[i]);
+				});
 			}
 			this.raw = apply_expression(node, fragment);
 		}

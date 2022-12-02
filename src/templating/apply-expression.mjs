@@ -13,12 +13,11 @@ export function apply_expression(node, expression) {
 	}
 
 	if (expr_type == 'function') {
-		return expression(node) ?? node;
+		const new_expr = expression(node);
+		return apply_expression(node, new_expr);
 	} else if (expr_type == 'undefined' || expression === null) {
 		// Do Nothing
 		return node;
-	} else if (expr_type == 'object' && 'then' in expression) {
-		return expression.then(new_expression => apply_expression(node, new_expression));
 	} else if (expr_type == 'object' && expression[Symbol.iterator] !== undefined) {
 		if (node instanceof Comment) {
 			// Create a range at the comment

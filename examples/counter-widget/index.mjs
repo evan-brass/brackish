@@ -16,6 +16,6 @@ function swapping(compute) {
 
 mount(html`
 	<button ${on('click', () => set_count(count() - 1))}>-</button>
-	${swapping(() => count())}
+	${() => count()}
 	<button ${on('click', () => set_count(count() + 1))}>+</button>
 `);
