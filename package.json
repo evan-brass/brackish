@@ -1,0 +1,10 @@
+{
+	"name": "brackish",
+	"version": "0.1.0",
+	"description": "Very light weight frontend framework.  Not fully featured, because I don't yet know the right way to implement many features.",
+	"main": "src/index.mjs",
+	"files": [
+		"src/*"
+	],
+	"license": "Unlicense"
+}

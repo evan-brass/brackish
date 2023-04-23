@@ -7,9 +7,7 @@ export function apply_expression(node, expression) {
 
 	// Handle ApplyExpression
 	if (expression instanceof ApplyExpression) {
-		return expression[ApplyExpression].apply_expression(node) ?? node;
-	} else if (node instanceof ApplyExpression) {
-		node = node[ApplyExpression].into_raw();
+		return expression[ApplyExpression](node);
 	}
 
 	if (expr_type == 'function') {
