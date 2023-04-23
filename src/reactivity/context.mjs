@@ -28,6 +28,7 @@ export class WaitSet extends Set {
 		}
 	}
 	queue() {
+		if (this.size == 0) return;
 		if (!waiters) {
 			waiters = new Set();
 			queueMicrotask(propagate);
