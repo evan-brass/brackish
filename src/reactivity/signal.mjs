@@ -1,4 +1,5 @@
 import { context, WaitSet } from "./context.mjs";
+import { apply_expression, ApplyExpression } from "../templating/apply-expression.mjs";
 
 export class Signal {
 	#waiters = new WaitSet();
@@ -14,6 +15,9 @@ export class Signal {
 		this.#value = new_value;
 		this.#waiters.queue();
 		return true;
+	}
+	[ApplyExpression](node) {
+		return apply_expression(node, this.value);
 	}
 }
 
@@ -39,5 +43,8 @@ export class Computed {
 			});
 		}
 		return this.#value;
+	}
+	[ApplyExpression](node) {
+		return apply_expression(node, this.value);
 	}
 }
