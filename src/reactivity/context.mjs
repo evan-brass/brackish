@@ -33,7 +33,9 @@ export class WaitSet extends Set {
 			waiters = new Set();
 			queueMicrotask(propagate);
 		}
-		waiters.add(...this.values());
+		for (const value of this) {
+			waiters.add(value);
+		}
 		this.clear();
 	}
 }
