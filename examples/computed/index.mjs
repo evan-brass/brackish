@@ -1,49 +1,50 @@
-import html from '../../src/templating/html.mjs';
-import mount from '../../src/templating/mount.mjs';
-import on from '../../src/templating/on.mjs';
-import single from '../../src/reactivity/single.mjs';
-import computed from '../../src/reactivity/computed.mjs';
-import { use_later } from '../../src/reactivity/use.mjs';
-import set_text from '../../src/templating/set_text.mjs';
+import { mount, html, Signal, Computed, on } from 'brackish';
 
-const a = single(5);
-const b = single(10);
-const c = single(10);
-const ab = computed(() => a.value + b.value);
-const abc = computed(() => ab.value + c.value);
+const a = new Signal(5);
+const b = new Signal(10);
+const c = new Signal(6);
+
+/* Function based: */
+// const ab = () => {
+// 	console.log('computing ab');
+// 	return a.value + b.value;
+// };
+// const abc = () => {
+// 	console.log('computing abc');
+// 	return ab() + c.value;
+// };
+
+/* Computed based: */
+const ab = new Computed(() => {
+	console.log('computing ab');
+	return a.value + b.value;
+});
+const abc = new Computed(() => {
+	console.log('computing abc');
+	return ab.value + c.value;
+});
 
 mount(html`
+	<p>Initial value for a: ${a.value}</p>
+	<p>Live updating value of a: ${a}</p>
+
 	<h2>Computed Tests:</h2>
 	<label>
-		<input type="range"
-			${el => el.value = a.value}
-			min="1" max="10" step="1" 
-			${on('input', e => a.value = e.target.valueAsNumber)}
-		>
-		a: ${set_text(use_later(t => t(a.value), true))}
+		<input type="range" value="${a.value}" min="1" max="10" step="1" ${on('input', e => a.value = e.target.valueAsNumber)}>
+		a: ${a}
 	</label><br>
 	<label>
-		<input type="range"
-			${el => el.value = b.value}
-			min="1" max="10" step="1"
-			${on('input', e => b.value = e.target.valueAsNumber)}
-		>
-		b: ${set_text(use_later(t => t(b.value), true))}
+		<input type="range" value="${b.value}" min="1" max="10" step="1" ${on('input', e => b.value = e.target.valueAsNumber)}>
+		b: ${b}
 	</label><br>
 	<label>
-		<input type="range"
-			${el => el.value = c.value}
-			min="1" max="10" step="1" 
-			${on('input', e => c.value = e.target.valueAsNumber)}
-		>
-		c: ${set_text(use_later(t => t(c.value), true))}
+		<input type="range" value="${c.value}" min="1" max="10" step="1" ${on('input', e => c.value = e.target.valueAsNumber)}>
+		c: ${c}
 	</label><br>
 	<label>
-		a + b: 
-		<input type="number" disabled ${use_later(el => el.value = ab.value, true)}>
+		a + b: <input type="number" disabled value="${ab}">
 	</label><br>
 	<label>
-		(a + b) + c: 
-		<input type="number" disabled ${use_later(el => el.value = abc.value, true)}>
+		(a + b) + c: <input type="number" disabled value="${abc}">
 	</label><br>
-`, document.body);
+`);
