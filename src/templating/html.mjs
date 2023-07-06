@@ -36,9 +36,10 @@ class Html {
 
 			// Apply the expressions to the parts:
 			for (let i = 0; i < this.expressions.length; ++i) {
-				context(() => {
+				const html_sub_expr = () => {
 					this.nodes[i] = apply_expression(this.nodes[i], this.expressions[i]);
-				});
+				};
+				context(html_sub_expr);
 			}
 			this.raw = apply_expression(node, fragment);
 		}

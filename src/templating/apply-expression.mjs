@@ -1,6 +1,6 @@
 import Trait from '../lib/trait.mjs';
 
-export const ApplyExpression = new Trait("Override default expression application for this object.");
+export const ApplyExpression = new Trait("ApplyExpression");
 
 export function apply_expression(node, expression) {
 	const expr_type = typeof expression;

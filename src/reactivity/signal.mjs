@@ -33,14 +33,15 @@ export class Computed {
 	get value() {
 		this.#waiters.aquire();
 		if (this.#value == Uncomputed) {
-			context(() => {
+			const computed_validate = () => {
 				if (this.#value == Uncomputed) {
 					this.#value = this.compute();
 				} else {
 					this.#value == Uncomputed;
 					this.#waiters.queue();
 				}
-			});
+			};
+			context(computed_validate);
 		}
 		return this.#value;
 	}
